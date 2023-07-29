@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('{{ url_for("static", filename="pexels-johannes-plenio.jpg") }}');
+            background-size: cover;
+            background-color: rgba(255, 255, 255, 0.5); /* 背景颜色透明度为 0.5 */
+        }
+        .register-form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 mx-auto register-form">
+                <h1 class="text-center mb-4">Register</h1>
+                <form method="POST" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label for="{{ form.email.id }}" class="form-label">Email</label>
+                        {{ form.email(class="form-control", required="required") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.email.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.password.id }}" class="form-label">Password</label>
+                        {{ form.password(class="form-control", required="required") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.password.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.repeatPassword.id }}" class="form-label">Repeat Password</label>
+                        {{ form.repeatPassword(class="form-control", required="required") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.repeatPassword.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

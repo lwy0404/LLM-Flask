@@ -18,7 +18,7 @@ import sys
 
 app = Flask(__name__)
 app.secret_key = 'Liwanyun888'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:Liwanyun888@localhost:3306/watchlist'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://llm:llm123@192.168.0.106:3306/watchlist'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)  # 实例化扩展类
@@ -37,6 +37,8 @@ class User(db.Model, UserMixin):
 
     def validate_password(self, password):  # 用于验证密码的方法，接受密码作为参数
         return check_password_hash(self.password_hash, password)  # 返回布尔值
+    def get_id(self):
+        return str(self.email)
 
 
 class Schedule(db.Model):
@@ -103,7 +105,7 @@ def login():
         useremail = form.email.data
         password = form.password.data
         user = User.query.get(useremail)
-        if useremail == user.email and user.validate_password(password):
+        if user is not None and user.validate_password(password):
             login_user(user)  # 登入用户
             flash('Login success.')
             return render_template('index.html')
@@ -208,4 +210,9 @@ def addSchedule():
 
 @app.route('/viewSchedule', methods=['GET', 'POST'])
 def viewSchedule():
-    return render_template('beginpage.html')
+    page = int(request.args.get('page', 1))  # 获取页码，默认为第一页
+    per_page = 10  # 每页显示的日程数量
+    user_schedules = Schedule.query.filter_by(user_email=current_user.email).order_by(Schedule.date.desc()).paginate(
+        page, per_page, error_out=False)
+
+    return render_template('viewSchedule.html', user_schedules=user_schedules)

@@ -9,7 +9,7 @@
     <style>
         body {
             padding-top: 60px; /* 添加页面上方的空间，以留给导航栏 */
-            background-image: url("static/tim-mossholder.jpg");
+            background-image: url("static/aleksander.jpg");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -24,15 +24,53 @@
             z-index: 100; /* 确保导航栏位于页面最顶层 */
             padding: 10px;
         }
+         .navbar-text {
+            color: #fff; /* Welcome 文本颜色为白色 */
+            margin-right: 20px;
+        }
+        .logout-link {
+            color: #000 !important; /* Logout 链接文本颜色为黑色 */
+        }
+        .logout-link:hover {
+            background-color: #000 !important;
+            color: #fff !important; /* 鼠标悬停时，Logout 链接文本颜色变为白色 */
+        }
+        .semi-transparent-button {
+            opacity: 0.7; /* 设置按钮半透明度为0.7 */
+        }
+        .black-button {
+            color: #000 !important;
+            background-color: #fff !important;
+            border: 2px solid #000 !important;
+        }
+        .black-button:hover {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+        .centered-form {
+            max-width: 900px; /* 设置表单的最大宽度 */
+            margin: 0 auto; /* 将表单居中 */
+            opacity: 0.8;
+        }
+        .wider-input {
+            width: 700px;
+            margin: 0 auto; /* 将表单居中 */
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
     <!-- Navbar (if needed) -->
     <!-- Add your navbar code here -->
     <nav class="navbar">
-        <div class="container">
-            <span class="navbar-text">Welcome, {{ current_user.email }}</span>
-            <a href="{{ url_for('logout') }}" class="btn btn-primary black-button logout-link">Logout</a>
+        <div class="container d-flex justify-content-between"> <!-- 使用flex布局，使内容左右对齐 -->
+            <div>
+                <a class="navbar-brand text-white" href="{{ url_for('index') }}">Home</a> <!-- Home按钮链接到首页 -->
+            </div>
+            <div>
+                <span class="navbar-text">Welcome，{{ current_user.email }}</span> <!-- Welcome文本 -->
+                <a href="{{ url_for('logout') }}" class="btn btn btn-light logout-link">logout</a> <!-- 登出按钮 -->
+            </div>
         </div>
     </nav>
     <!-- Content -->
@@ -45,27 +83,32 @@
             {{ form_llm.csrf_token }}
             <div class="mb-3">
                 <label for="events" class="form-label">Please provide the event details:</label>
-                {{ form_llm.events(class="form-control", id="events") }}
+               <textarea class="form-control centered-form" id="events" name="events" rows="4" placeholder="Enter event details"></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <div class="d-flex justify-content-center"> <!-- 使用 d-flex justify-content-center 类使按钮居中对齐 -->
+                <button type="submit" class="btn btn btn-light black-button semi-transparent-button">Submit</button>
+            </div>
         </form>
 
         <!-- Submit to MySQL Form -->
         <form method="post" action="{{ url_for('addSchedule') }}">
             {{ form_mysql.csrf_token }}
             <div class="mb-3">
-                <label for="date" class="form-label">Date and Time (Format: YYYY-MM-DD HH:MM):</label>
-                {{ form_mysql.date(class="form-control", id="date") }}
+                <label for="event" class="form-label">Event:</label>
+                <textarea class="form-control wider-input" id="event" name="event" rows="4" placeholder="Enter event"></textarea>
             </div>
             <div class="mb-3">
-                <label for="event" class="form-label">Event:</label>
-                {{ form_mysql.event(class="form-control", id="event") }}
+                <label for="date" class="form-label">Date and Time (Format: YYYY-MM-DD HH:MM):</label>
+                {{ form_mysql.date(class="form-control wider-input ", id="date") }}
             </div>
+
             <div class="mb-3">
                 <label for="location" class="form-label">Location:</label>
-                {{ form_mysql.location(class="form-control", id="location") }}
+                {{ form_mysql.location(class="form-control wider-input ", id="location") }}
             </div>
-            <button type="submit" class="btn btn-primary">Add Schedule</button>
+            <div class="d-flex justify-content-center"> <!-- 使用 d-flex justify-content-center 类使按钮居中对齐 -->
+                <button type="submit" class="btn btn btn-light black-button semi-transparent-button">Submit</button>
+            </div>
         </form>
     </div>
 

@@ -17,7 +17,7 @@ import click
 import sys
 
 app = Flask(__name__)
-app.secret_key = 'Liwanyun888'
+app.secret_key = os.getenv('SECRET_KEY', 'dev')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://llm:llm123@192.168.0.106:3306/watchlist'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
 db = SQLAlchemy(app)

@@ -24,7 +24,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)  # 实例化扩展类
 login_manager.login_view = 'login'
 bootstrap = Bootstrap5(app)
-LLM_API_URL = 'http://115.157.198.84:19327/v1/chat/completions'
+LLM_API_URL = 'http://115.157.197.84:19327/v1/chat/completions'
 
 
 class User(db.Model, UserMixin):
@@ -37,6 +37,7 @@ class User(db.Model, UserMixin):
 
     def validate_password(self, password):  # 用于验证密码的方法，接受密码作为参数
         return check_password_hash(self.password_hash, password)  # 返回布尔值
+
     def get_id(self):
         return str(self.email)
 
@@ -46,7 +47,7 @@ class Schedule(db.Model):
     scheduleEvent = db.Column(db.Text)
     location = db.Column(db.Text)
     user_email = db.Column(db.String(30), db.ForeignKey('user.email'),
-                           nullable=False,primary_key=True)
+                           nullable=False, primary_key=True)
 
 
 class LoginForm(FlaskForm):
@@ -79,11 +80,15 @@ class submit_to_LLMForm(FlaskForm):
 class submit_to_MySQL(FlaskForm):
     event = StringField(u'事件', validators=[
         DataRequired(message=u'事件不能为空'), Length(1, 64)])
-    date = StringField(u'日程',validators=[
+    date = StringField(u'日程', validators=[
         DataRequired(message=u'日期不能为空'),
         Regexp(r'^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}$', message=u'日期格式必须为YYYY-MM-DD HH:MM')
     ])
     location = StringField(u'地点')
+
+
+class delete_event(FlaskForm):
+    delete = SubmitField('Delete')
 
 
 @login_manager.user_loader
@@ -164,7 +169,7 @@ def addSchedule():
 
     if request.method == 'POST' and form_llm.validate_on_submit():
         # Get the input from the submit_to_LLMForm
-        user_message = form_llm.events.data
+        user_message = "我需要你从日程信息中提取出时间,地点和事件.输出格式为时间:....;地点:....;事件:.....;日程信息:" + form_llm.events.data
 
         # Prepare the payload for the LLM API request
         payload = {
@@ -210,9 +215,28 @@ def addSchedule():
 
 @app.route('/viewSchedule', methods=['GET', 'POST'])
 def viewSchedule():
+    form = delete_event()
     page = int(request.args.get('page', 1))  # 获取页码，默认为第一页
     per_page = 10  # 每页显示的日程数量
     user_schedules = Schedule.query.filter_by(user_email=current_user.email).order_by(Schedule.date.desc()).paginate(
         page, per_page, error_out=False)
 
-    return render_template('viewSchedule.html', user_schedules=user_schedules)
+    return render_template('viewSchedule.html', user_schedules=user_schedules,form=form)
+
+
+@app.route('/viewSchedule/delete/<string:event_date', methods=['POST'])  # 限定只接受 POST 请求
+def delete(event_date):
+    event_date = datetime.strptime(event_date, "%Y-%m-%d %H:%M")
+    try:
+        event = Schedule.query.filter_by(user_email=current_user.email, date=event_date).first()
+        if not event:
+            raise Exception("Event not found")  # 抛出异常，提示未找到对应的记录
+
+        db.session.delete(event)  # 删除对应的记录
+        db.session.commit()  # 提交数据库会话
+        flash('Item deleted.')
+    except Exception as e:
+        db.session.rollback()  # 出现异常时回滚数据库会话
+        flash('Error deleting item: {}'.format(str(e)))  # 显示错误消息
+
+    return redirect(url_for('viewSchedule'))  # 重定向回主页

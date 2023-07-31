@@ -25,6 +25,15 @@
             color: #fff; /* Welcome 文本颜色为白色 */
             margin-right: 20px;
         }
+        .black-button {
+            color: #000 !important;
+            background-color: #fff !important;
+            border: 2px solid #000 !important;
+        }
+        .black-button:hover {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
     </style>
 </head>
 <body>
@@ -41,63 +50,46 @@
         </div>
     </nav>
     <!-- Content -->
-    <div class="container mt-4">
-        <h1 class="text-center">View Schedule</h1>
+<!-- 日程列表 -->
+    <div class="container">
+        <h1 class="text-center">Your Schedule</h1>
         <hr>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Date and Time</th>
+                    <th>Event</th>
+                    <th>Location</th>
+                    <th>Action</th> <!-- 添加一个表头用于显示操作 -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in user_schedules.items %}
+                <tr>
+                    <td>{{ event.date }}</td>
+                    <td>{{ event.scheduleEvent }}</td>
+                    <td>{{ event.location }}</td>
+                    <td>
+                        <!-- 显示删除按钮 -->
+                        <form method="post">
+                            {{ form.hidden_tag() }} <!-- 包含CSRF令牌 -->
+                            <input type="hidden" name="event_date" value="{{ event.date }}"> <!-- 添加隐藏字段传递事件日期 -->
+                            {{ form.delete(class="btn btn-danger btn-sm", formnovalidate=true) }} <!-- 使用表单中定义的delete按钮 -->
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-        <div class="row">
-            <div class="col">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Event</th>
-                            <th>Location</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for schedule in user_schedules.items %}
-                            <tr>
-                                <td>{{ schedule.date.date }}</td>
-                                <td>{{ schedule.scheduleEvent }}</td>
-                                <td>{{ schedule.location }}</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        {% if user_schedules.has_prev %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('viewSchedule', page=user_schedules.prev_num) }}">Previous</a>
-                            </li>
-                        {% endif %}
-                        {% for num in user_schedules.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                            {% if num %}
-                                {% if user_schedules.page == num %}
-                                    <li class="page-item active">
-                                        <span class="page-link">{{ num }}</span>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ url_for('viewSchedule', page=num) }}">{{ num }}</a>
-                                    </li>
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                        {% if user_schedules.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="{{ url_for('viewSchedule', page=user_schedules.next_num) }}">Next</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
+        <!-- 分页 -->
+        <div class="d-flex justify-content-center">
+            {% if user_schedules.has_prev %}
+                <a class="btn btn-primary black-button semi-transparent-button" href="{{ url_for('viewSchedule', page=user_schedules.prev_num) }}">Previous</a>
+            {% endif %}
+            {% if user_schedules.has_next %}
+                <a class="btn btn-primary black-button semi-transparent-button" href="{{ url_for('viewSchedule', page=user_schedules.next_num) }}">Next</a>
+            {% endif %}
         </div>
     </div>
 

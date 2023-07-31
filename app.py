@@ -4,8 +4,8 @@ from flask import Flask, render_template, request, flash, redirect, url_for
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user, UserMixin, LoginManager
-from wtforms import StringField, SubmitField, PasswordField, DateTimeField
-from wtforms.validators import DataRequired, Length, Email, ValidationError, EqualTo, Regexp
+from wtforms import StringField, SubmitField, PasswordField
+from wtforms.validators import DataRequired, Length, Email,  EqualTo, Regexp
 from flask_wtf import FlaskForm
 from flask_bootstrap import Bootstrap5
 import email_validator
@@ -13,7 +13,7 @@ import flask_mysqldb
 from flask_sqlalchemy import SQLAlchemy
 from markupsafe import escape
 import os
-import click
+
 import sys
 
 app = Flask(__name__)
@@ -224,7 +224,7 @@ def viewSchedule():
     return render_template('viewSchedule.html', user_schedules=user_schedules,form=form)
 
 
-@app.route('/viewSchedule/delete/<string:event_date', methods=['POST'])  # 限定只接受 POST 请求
+@app.route('/viewSchedule/delete/<string:event_date>', methods=['POST'])  # 限定只接受 POST 请求
 def delete(event_date):
     event_date = datetime.strptime(event_date, "%Y-%m-%d %H:%M")
     try:

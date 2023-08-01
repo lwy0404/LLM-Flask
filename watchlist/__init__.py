@@ -12,13 +12,13 @@ import sys
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://llm:llm123@192.168.0.106:3306/watchlist'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://huangzhan:graph@115.157.197.84:3306/LLM'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)  # 实例化扩展类
 login_manager.login_view = 'login'
 bootstrap = Bootstrap5(app)
-LLM_API_URL = 'http://115.157.197.84:19327/v1/chat/completions'
+LLM_API_URLgit = 'http://115.157.197.84:19327/v1/chat/completions'
 
 @login_manager.user_loader
 def load_user(user_email):  # 创建用户加载回调函数，接受用户 ID 作为参数

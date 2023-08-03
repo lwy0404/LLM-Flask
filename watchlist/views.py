@@ -9,8 +9,10 @@ from watchlist.models import User, Schedule
 from flask_login import login_user, login_required, logout_user, current_user
 from flask import render_template, request, url_for, redirect, flash
 from wtforms import StringField, SubmitField, PasswordField
-from wtforms.validators import DataRequired, Length, Email,  EqualTo, Regexp
+from wtforms.validators import DataRequired, Length, Email, EqualTo, Regexp
 from flask_wtf import FlaskForm
+
+
 class LoginForm(FlaskForm):
     email = StringField(u'邮箱', validators=[
         DataRequired(message=u'邮箱不能为空'), Length(1, 64),
@@ -34,13 +36,13 @@ class RegisterForm(FlaskForm):
 
 class submit_to_LLMForm(FlaskForm):
     events = StringField(u'日程', validators=[
-        DataRequired(message=u'日程信息不能为空'), Length(1, 64)])
+        DataRequired(message=u'日程信息不能为空'), Length(1, 1024)])
     submit = SubmitField(u'解析')
 
 
 class submit_to_MySQL(FlaskForm):
     event = StringField(u'事件', validators=[
-        DataRequired(message=u'事件不能为空'), Length(1, 64)])
+        DataRequired(message=u'事件不能为空'), Length(1, 1024)])
     date = StringField(u'日程', validators=[
         DataRequired(message=u'日期不能为空'),
         Regexp(r'^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}$', message=u'日期格式必须为YYYY-MM-DD HH:MM')
@@ -50,6 +52,7 @@ class submit_to_MySQL(FlaskForm):
 
 class delete_event(FlaskForm):
     delete = SubmitField('Delete')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -87,7 +90,7 @@ def register():
 
         flash('register success. Please log in')
         newForm = LoginForm()
-        return render_template('login.html', form=newForm)
+        return redirect(url_for('login'))
 
     return render_template('register.html', form=form)
 
@@ -110,55 +113,73 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/addSchedule', methods=['GET', 'POST'])
-def addSchedule():
+@app.route('/addSchedule_LLM', methods=['GET', 'POST'])
+def addSchedule_LLM():
     form_llm = submit_to_LLMForm()
     form_mysql = submit_to_MySQL()
-
     if request.method == 'POST' and form_llm.validate_on_submit():
         # Get the input from the submit_to_LLMForm
-        user_message = "我需要你从日程信息中提取出时间,地点和事件.输出格式为时间:....;地点:....;事件:.....;日程信息:" + form_llm.events.data
+        user_message = "我需要你从日程信息中提取出时间,地点和事件.输出格式为时间:....;地点:....;事件:.....;除此之外不能有多余的输出.日程信息:" + form_llm.events.data
 
         # Prepare the payload for the LLM API request
         payload = {
             "messages": [{"role": "user", "message": user_message}],
             "repetition_penalty": 1.0
         }
-
         # Make the request to the LLM API
         response = requests.post(LLM_API_URL, json=payload)
-        data = response.json()
 
-        # Process the response to extract the relevant information
-        extracted_data = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        if response.status_code == 200:
+            data = response.json()
+            choices_list = data.get("choices", [])
+            if len(choices_list) >= 2:
+                extracted_data = choices_list[1].get("message", {}).get("content", "")
+            # Process the response to extract the relevant information
 
-        # Split the extracted_data to get the time, location, and event
-        extracted_data = extracted_data.split(';')
-        time = extracted_data[0].split(':')[1].strip()
-        location = extracted_data[1].split(':')[1].strip()
-        event = extracted_data[2].split(':')[1].strip()
+            '''flash("data from API:" + extracted_data)'''
+            # Split the extracted_data to get the time, location, and event
+            extracted_data = extracted_data.split(';')
 
-        # Populate the submit_to_MySQL form with the extracted data
-        form_mysql.event.data = event
-        form_mysql.date.data = time
-        form_mysql.location.data = location
+            time = extracted_data[0].split(':')[1].strip()
+            location = extracted_data[1].split(':')[1].strip()
+            event = extracted_data[2].split(':')[1].strip()
 
-        if form_mysql.validate_on_submit():
-            try:
-                sc_time = datetime.strptime(form_mysql.date.data, "%Y-%m-%d %H:%M")  # 添加分钟部分的格式化选项
-                schedule = Schedule(date=form_mysql.date.data,
+
+            # Populate the submit_to_MySQL form with the extracted data
+            form_mysql.event.data = event
+            flash("event from API:" + form_mysql.event.data)
+            form_mysql.date.data = time
+            form_mysql.location.data = location
+
+    elif request.method == 'POST' and form_mysql.validate_on_submit():
+        try:
+            sc_time = datetime.strptime(form_mysql.date.data, "%Y-%m-%d %H:%M")  # 添加分钟部分的格式化选项
+            schedule = Schedule(date=sc_time,
                                     scheduleEvent=form_mysql.event.data,  # 将event字段赋给scheduleEvent
-                                    location=form_mysql.location.data)
-                db.session.add(schedule)
-                db.session.commit()
-                flash('Schedule information added successfully.')
-            except ValueError as e:
-                flash(f'Error parsing date: {e}', 'danger')
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                error_msg = str(e)
-                flash(f'Error adding schedule information: {error_msg}', 'danger')
+                                    location=form_mysql.location.data,
+                                    user_email=current_user.email)
+            db.session.add(schedule)
+            db.session.commit()
+            flash('Schedule information added successfully.')
+        except ValueError as e:
+            flash(f'Error parsing date: {e}', 'danger')
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            error_msg = str(e)
+            flash(f'Error adding schedule information: {error_msg}', 'danger')
+        return redirect(url_for('addSchedule_LLM'))
+    elif request.method == 'POST' and form_mysql.validate_on_submit() is False :
+        if bool(form_mysql.event.errors):
+            flash("event_errors: " + ", ".join(form_mysql.event.errors))
+        if bool(form_mysql.date.errors):
+            flash("date_errors: " + ", ".join(form_mysql.date.errors))
+        if bool(form_mysql.location.errors):
+            flash("location_errors: " + ", ".join(form_mysql.location.errors))
+        return redirect(url_for('addSchedule_LLM'))
     return render_template('addSchedule.html', form_llm=form_llm, form_mysql=form_mysql)
+
+
+
 
 
 @app.route('/viewSchedule', methods=['GET', 'POST'])
@@ -169,7 +190,7 @@ def viewSchedule():
     user_schedules = Schedule.query.filter_by(user_email=current_user.email).order_by(Schedule.date.desc()).paginate(
         page, per_page, error_out=False)
 
-    return render_template('viewSchedule.html', user_schedules=user_schedules,form=form)
+    return render_template('viewSchedule.html', user_schedules=user_schedules, form=form)
 
 
 @app.route('/viewSchedule/delete/<string:event_date>', methods=['POST'])  # 限定只接受 POST 请求

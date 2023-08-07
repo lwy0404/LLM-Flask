@@ -195,7 +195,7 @@ def viewSchedule():
 
 @app.route('/viewSchedule/delete/<string:event_date>', methods=['POST'])  # 限定只接受 POST 请求
 def delete(event_date):
-    event_date = datetime.strptime(event_date, "%Y-%m-%d %H:%M")
+    event_date = datetime.strptime(event_date, "%Y-%m-%d %H:%M:%S")
     try:
         event = Schedule.query.filter_by(user_email=current_user.email, date=event_date).first()
         if not event:

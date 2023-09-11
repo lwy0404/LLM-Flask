@@ -12,7 +12,7 @@ import sys
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://huangzhan:graph@localhost:3306/LLM'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://huangzhan:graph@115.157.197.84:3306/LLM'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 关闭对模型修改的监控
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)  # 实例化扩展类

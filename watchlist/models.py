@@ -19,7 +19,8 @@ class User(db.Model, UserMixin):
 
 
 class Schedule(db.Model):
-    date = db.Column(db.DateTime, primary_key=True)
+    begindate = db.Column(db.DateTime, primary_key=True)
+    endate = db.Column(db.DateTime, primary_key=True)
     scheduleEvent = db.Column(db.Text)
     location = db.Column(db.Text)
     user_email = db.Column(db.String(30), db.ForeignKey('user.email'),

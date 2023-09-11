@@ -93,19 +93,19 @@
         <hr>
 
         <!-- Submit to LLM Form -->
-        <form method="post" action="{{ url_for('addSchedule_LLM') }}">
+        <form method="post" action="{{ url_for('addSchedule_LLM') }}" id="llm-form">
             {{ form_llm.csrf_token }}
             <div class="mb-3">
                 <label for="events" class="form-label">Please provide the event details:</label>
                <textarea class="form-control centered-form" id="events" name="events" rows="4" placeholder="Enter event details"></textarea>
             </div>
             <div class="d-flex justify-content-center"> <!-- 使用 d-flex justify-content-center 类使按钮居中对齐 -->
-                <button type="submit" class="btn btn btn-light black-button semi-transparent-button">Submit</button>
+                <button type="submit" id="llm-submit" class="btn btn btn-light black-button semi-transparent-button">Submit</button>
             </div>
         </form>
 
         <!-- Submit to MySQL Form -->
-        <form method="post" action="{{ url_for('addSchedule_LLM') }}">
+        <form method="post" action="{{ url_for('addSchedule_LLM') }}" id="mysql-form"  style="display: none;">
             {{ form_mysql.csrf_token }}
             <div class="mb-3">
                 <label for="event" class="form-label">Event:</label>
@@ -134,7 +134,36 @@
             </div>
         </form>
     </div>
+    <script>
+     document.addEventListener("DOMContentLoaded", function () {
+        // 获取表单元素
+        var llmForm = document.getElementById("llm-form");
+        var mysqlForm = document.getElementById("mysql-form");
 
+        // 获取表单字段元素
+        var eventsField = llmForm.querySelector('textarea[name="events"]');
+
+        // 检查本地存储中是否有保存的字段值
+        var savedEvents = sessionStorage.getItem("savedEvents");
+
+        // 如果有保存的字段值，则填充表单字段（仅在第一个表单中执行）
+        if (savedEvents && llmForm) {
+            eventsField.value = savedEvents;
+        }
+
+        // 在第一个表单提交前，保存字段值到会话
+        if (llmForm) {
+            llmForm.addEventListener("submit", function () {
+                sessionStorage.setItem("savedEvents", eventsField.value);
+            });
+        }
+    });
+    var llmSubmitButton = document.getElementById("llm-submit");
+    llmSubmitButton.addEventListener("click", function (event) {
+        // 显示第二个表单
+        mysqlForm.style.display = "block";
+    });
+</script>
     <!-- Bootstrap JS and Popper.js (required for some Bootstrap components) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
